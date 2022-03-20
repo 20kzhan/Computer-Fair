@@ -1,4 +1,4 @@
-from card import Card
+from UNO.card import Card
 import random
 
 class Deck:

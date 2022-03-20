@@ -1,7 +1,8 @@
 import random
 import time
-import hand, deck, card
-import msvcrt
+from UNO.card import *
+from UNO.hand import *
+from UNO.deck import *
 
 color = ('RED', 'GREEN', 'BLUE', 'YELLOW')
 rank = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Skip', 'Reverse', 'Draw2', 'Draw4', 'Wild')
@@ -48,39 +49,33 @@ def last_card_check(hand):
 def print_rules():
     """Prints the rules at the beginning of the game if told to."""
 
-    print("In each round, be the first player to play all the cards in your hand and "
-          "score points for the cards that your opponents are left holding.")
+    print("Setup\n\nAt the start of each round, each player is dealt 7 cards. A card is drawn from the deck"
+          "and placed down. This card is the starter card.\n")
+    print("Cards\n\nCards come in 2 types, colored and special. Colored cards can be one of 4 colors: "
+          "RED, GREEN, BLUE, or YELLOW. Each colored card also has a number on it, from 0-9.")
     print()
 
-
-if __name__ == "__main__":
+def play_game():
     # The gaming loop
     while True:
-        print('Welcome to UNO!\nDo you want to hear the rules (Y/N)? ', end='')
-        rules = msvcrt.getch().lower().decode('UTF-8')
-        if rules == 'y':
-            print_rules()
-        else:
-            print("Starting Game...")
-
         # Creating the UNO deck
-        deck = deck.Deck()
-        deck.shuffle()
+        game_deck = Deck()
+        game_deck.shuffle()
 
         # Creating the player and PC hands
-        player_hand = hand.Hand()
-        for i in range(7):
-            player_hand.add_card(deck.deal())
+        player_hand = Hand()
+        for i in range(1):
+            player_hand.add_card(game_deck.deal())
 
-        pc_hand = hand.Hand()
+        pc_hand = Hand()
         for i in range(7):
-            pc_hand.add_card(deck.deal())
+            pc_hand.add_card(game_deck.deal())
 
         # Play the first card
-        top_card = deck.deal()
+        top_card = game_deck.deal()
         if top_card.cardtype != 'number':
             while top_card.cardtype != 'number':
-                top_card = deck.deal()
+                top_card = game_deck.deal()
         print(f'\nStarting Card is: {top_card}')
         time.sleep(1)
         playing = True
@@ -97,15 +92,24 @@ if __name__ == "__main__":
                 if player_hand.no_of_cards() == 1:
                     if last_card_check(player_hand):
                         print('Last card cannot be action card \nAdding one card from deck')
-                        player_hand.add_card(deck.deal())
+                        player_hand.add_card(game_deck.deal())
                         print('Your cards: ')
                         player_hand.cards_in_hand()
                 choice = input("\nHit (play a card) or Pull (draw a card)? (h/p): ")
                 if choice.lower() in ('h', 'hit'):
-                    print("Enter index of card: ", end='')
-                    pos = int(msvcrt.getch())
-                    print(pos)
-                    temp_card = player_hand.single_card(pos)
+                    while True:
+                        while True:
+                            try:
+                                pos = int(input("Enter index of card: "))
+                            except TypeError:
+                                print("That is not a valid index!")
+                            else:
+                                break
+                        temp_card = player_hand.single_card(pos)
+                        if not temp_card:
+                            print("That is not a valid index!")
+                            continue
+                        break
                     if single_card_check(top_card, temp_card):
                         if temp_card.cardtype == 'number':
                             top_card = player_hand.remove_card(pos)
@@ -118,19 +122,27 @@ if __name__ == "__main__":
                                 turn = 'Player'
                                 top_card = player_hand.remove_card(pos)
                             elif temp_card.rank == 'Draw2':
-                                pc_hand.add_card(deck.deal())
-                                pc_hand.add_card(deck.deal())
+                                pc_hand.add_card(game_deck.deal())
+                                pc_hand.add_card(game_deck.deal())
                                 top_card = player_hand.remove_card(pos)
                                 print("PC drew two cards")
                                 turn = 'Player'
                             elif temp_card.rank == 'Draw4':
                                 for i in range(4):
-                                    pc_hand.add_card(deck.deal())
+                                    pc_hand.add_card(game_deck.deal())
                                 top_card = player_hand.remove_card(pos)
-                                draw4color = input('Change color to: ')
-                                if draw4color != draw4color.upper():
-                                    draw4color = draw4color.upper()
+                                
+                                while True:
+                                    draw4color = input('Change color to: ').upper()
+                                    
+                                    if draw4color not in ("YELLOW", "RED", "BLUE", "GREEN"):
+                                        print("I couldn't understand that. Try again?")
+                                    else:
+                                        break
+                                
                                 top_card.color = draw4color
+                                print(f"Color changed to {draw4color.lower()}.")
+                                
                                 print("PC drew four cards!")
                                 turn = 'Player'
                             elif temp_card.rank == 'Wild':
@@ -142,7 +154,7 @@ if __name__ == "__main__":
                     else:
                         print('This card cannot be used')
                 elif choice.lower() in ('p', 'pull'):
-                    temp_card = deck.deal()
+                    temp_card = game_deck.deal()
                     print('You got: ' + str(temp_card))
                     time.sleep(1)
                     if single_card_check(top_card, temp_card):
@@ -160,7 +172,7 @@ if __name__ == "__main__":
                     if last_card_check(pc_hand):
                         time.sleep(1)
                         print('Adding a card to PC hand')
-                        pc_hand.add_card(deck.deal())
+                        pc_hand.add_card(game_deck.deal())
                 temp_card = full_hand_check(pc_hand, top_card)
                 time.sleep(1)
                 if temp_card != 'no card':
@@ -177,13 +189,13 @@ if __name__ == "__main__":
                             turn = 'Pc'
                             top_card = temp_card
                         elif temp_card.rank == 'Draw2':
-                            player_hand.add_card(deck.deal())
-                            player_hand.add_card(deck.deal())
+                            player_hand.add_card(game_deck.deal())
+                            player_hand.add_card(game_deck.deal())
                             top_card = temp_card
                             turn = 'Pc'
                         elif temp_card.rank == 'Draw4':
                             for i in range(4):
-                                player_hand.add_card(deck.deal())
+                                player_hand.add_card(game_deck.deal())
                             top_card = temp_card
                             draw4color = pc_hand.cards[0].color
                             print('Color changes to', draw4color)
@@ -198,7 +210,7 @@ if __name__ == "__main__":
                 else:
                     print('\nPC pulls a card from deck')
                     time.sleep(1)
-                    temp_card = deck.deal()
+                    temp_card = game_deck.deal()
                     if single_card_check(top_card, temp_card):
                         print(f'PC throws: {temp_card}')
                         time.sleep(1)
@@ -213,13 +225,13 @@ if __name__ == "__main__":
                                 turn = 'Pc'
                                 top_card = temp_card
                             elif temp_card.rank == 'Draw2':
-                                player_hand.add_card(deck.deal())
-                                player_hand.add_card(deck.deal())
+                                player_hand.add_card(game_deck.deal())
+                                player_hand.add_card(game_deck.deal())
                                 top_card = temp_card
                                 turn = 'Pc'
                             elif temp_card.rank == 'Draw4':
                                 for i in range(4):
-                                    player_hand.add_card(deck.deal())
+                                    player_hand.add_card(game_deck.deal())
                                 top_card = temp_card
                                 draw4color = pc_hand.cards[0].color
                                 print('Color changes to', draw4color)
@@ -243,7 +255,7 @@ if __name__ == "__main__":
                 playing = False
             elif win_check(player_hand):
                 print('\nYou Won!!')
-                playing = True
+                playing = False
 
         # Start a new round or end game
         new_game = input('Would you like to play UNO again? (y/n)')

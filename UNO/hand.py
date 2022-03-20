@@ -23,7 +23,10 @@ class Hand:
             print(f' {i + 1}.{self.cardsstr[i]}')
 
     def single_card(self, place):
-        return self.cards[place - 1]
+        try:
+            return self.cards[place - 1]
+        except IndexError:
+            return False
 
     def no_of_cards(self):
         return len(self.cards)
